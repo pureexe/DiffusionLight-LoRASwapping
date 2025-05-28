@@ -127,7 +127,7 @@ def main():
         except:
             pass
 
-
+    # createing queues for run, useful in case run in parallel
     queues = []
     for index in tqdm(index_list):
         input_image_path = os.path.join(args.dataset, index)
@@ -160,7 +160,7 @@ def main():
             'ev_queues': current_queue,
         })
 
-    
+    # setup pipeline components
     pipe = setup_sd()
     depth_estimator = setup_depth_estimator()
     
@@ -185,7 +185,7 @@ def main():
     inpaint_mask = Image.fromarray(inpaint_mask)
 
     # distribute queues across processes
-    #queues = queues[args.index::args.total] 
+    queues = queues[args.index::args.total] 
 
     # callback function
     def callback(pipeline, i, t, callback_kwargs):
