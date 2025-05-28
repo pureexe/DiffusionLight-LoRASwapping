@@ -8,6 +8,7 @@ from transformers import pipeline
 import numpy as np
 import json
 import time 
+import peft
 
 SWITCH_LORA_TIMESTEP = 800
 
@@ -49,7 +50,7 @@ def pil_square_image(image, desired_size = (1024,1024), interpolation=Image.LANC
     
     return new_image
 
-def setup_sd():
+def setup_sd(disable_lora=False):
     controlnet = ControlNetModel.from_pretrained("diffusers/controlnet-depth-sdxl-1.0", torch_dtype=torch.float16)
     pipe = StableDiffusionXLControlNetInpaintPipeline.from_pretrained(
         "stabilityai/stable-diffusion-xl-base-1.0",
@@ -58,8 +59,9 @@ def setup_sd():
         add_watermarker=False
     ).to("cuda")
     pipe.set_progress_bar_config(disable=True)
-    pipe.load_lora_weights("DiffusionLight/Flickr2K", adapter_name="turbo")
-    pipe.load_lora_weights("DiffusionLight/DiffusionLight", adapter_name="exposure")
+    if not disable_lora:
+        pipe.load_lora_weights("DiffusionLight/Flickr2K", adapter_name="turbo")
+        pipe.load_lora_weights("DiffusionLight/DiffusionLight", adapter_name="exposure")
     pipe.is_exposure_lora_loaded = False
     return pipe
 
@@ -161,7 +163,7 @@ def main():
         })
 
     # setup pipeline components
-    pipe = setup_sd()
+    pipe = setup_sd(disable_lora=args.disable_lora)
     depth_estimator = setup_depth_estimator()
     
     # create prompt embeddings
@@ -238,6 +240,7 @@ def main():
                 generator = torch.Generator(device="cuda").manual_seed(seed)
                 start_time = time.time()
                 callback_fn = callback if not args.disable_lora else None
+
                 output = pipe(
                     prompt_embeds=prompt_embeds_interpolated[ev_id],
                     pooled_prompt_embeds=pooled_prompt_embeds_interpolated[ev_id],
