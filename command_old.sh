@@ -1,0 +1,1 @@
+python inpaint.py --dataset /ist/ist-share/vision/relight/datasets/multi_illumination/spherical/train/images --output_dir /pure/t1/output/DiffusionLight-LoRASwapping/multi_illumination --index_file dataset_list_10.json
